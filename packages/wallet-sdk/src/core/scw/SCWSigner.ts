@@ -67,7 +67,7 @@ export class SCWSigner implements Signer {
     } else {
       const address = (session.user as any).wallet as AddressString;
       this.address = address
-      accounts = [address] as AddressString[]
+      accounts = [this.address] as AddressString[]
     }
 
     const response: RPCResponse<unknown> = {

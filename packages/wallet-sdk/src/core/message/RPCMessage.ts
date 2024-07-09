@@ -1,4 +1,4 @@
-import { Message, MessageID } from './Message';
+import { Message } from './Message';
 import { SerializedEthereumRpcError } from '../error';
 import { AppMetadata, RequestArguments } from '../provider/interface';
 import type { RPCResponse } from './RPCResponse';
