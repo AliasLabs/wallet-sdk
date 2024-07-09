@@ -1,8 +1,8 @@
 {
-  "name": "coinbase-wallet-sdk",
+  "name": "alias-wallet-sdk",
   "version": "1.0.0",
-  "repository": "https://github.com/coinbase/coinbase-wallet-sdk",
-  "author": "Coinbase, Inc.",
+  "repository": "https://github.com/AliasLabs/alias-wallet-sdk",
+  "author": "geovgy",
   "license": "MIT",
   "private": true,
   "workspaces": [

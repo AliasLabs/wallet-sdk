@@ -8,7 +8,7 @@
       ":util/*": ["src/util/*"],
       ":core/*": ["src/core/*"]
     },
-    "target": "es2017",
+    "target": "es2020",
     "jsx": "react",
     "jsxFactory": "h",
   },

@@ -1,4 +1,4 @@
-import { RequestArguments } from ':core/provider/interface';
+import { RequestArguments } from '../provider/interface';
 
 export type RPCRequest = {
   action: RequestArguments; // JSON-RPC call

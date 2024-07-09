@@ -1,8 +1,15 @@
-// TODO: error should not depend on walletlink. revisit this.
-import { isErrorResponse, Web3Response } from '../../sign/walletlink/relay/type/Web3Response';
-import { LIB_VERSION } from '../../version';
 import { standardErrorCodes } from './constants';
 import { serialize, SerializedEthereumRpcError } from './utils';
+
+type ErrorResponse = {
+  method: unknown;
+  errorCode?: number;
+  errorMessage: string;
+};
+
+export function isErrorResponse(response: unknown): response is ErrorResponse {
+  return (response as ErrorResponse).errorMessage !== undefined;
+}
 
 /**
  * Serializes an error to a format that is compatible with the Ethereum JSON RPC error format.
@@ -18,7 +25,7 @@ export function serializeError(
   });
 
   const docUrl = new URL('https://docs.cloud.coinbase.com/wallet-sdk/docs/errors');
-  docUrl.searchParams.set('version', LIB_VERSION);
+  docUrl.searchParams.set('version', '1.0');
   docUrl.searchParams.set('code', serialized.code.toString());
   const method = getMethod(serialized.data, requestOrMethod);
   if (method) {
@@ -35,7 +42,7 @@ export function serializeError(
 /**
  * Converts an error to a serializable object.
  */
-function getErrorObject(error: string | Web3Response | unknown) {
+function getErrorObject(error: string | any | unknown) {
   if (typeof error === 'string') {
     return {
       message: error,

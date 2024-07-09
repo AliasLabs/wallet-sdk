@@ -1,19 +1,20 @@
-import { StateUpdateListener } from '../interface';
-import { SCWKeyManager } from './SCWKeyManager';
+import { StateUpdateListener } from './interface';
+// import { SCWKeyManager } from './SCWKeyManager';
 import { SCWStateManager } from './SCWStateManager';
-import { Communicator } from ':core/communicator/Communicator';
-import { standardErrors } from ':core/error';
-import { RPCRequestMessage, RPCResponse, RPCResponseMessage } from ':core/message';
-import { AppMetadata, RequestArguments, Signer } from ':core/provider/interface';
-import { Method } from ':core/provider/method';
-import { AddressString } from ':core/type';
-import { ensureIntNumber } from ':core/type/util';
-import {
-  decryptContent,
-  encryptContent,
-  exportKeyToHexString,
-  importKeyFromHexString,
-} from ':util/cipher';
+import { Communicator } from '../communicator/Communicator';
+import { standardErrors } from '../error';
+import { RPCRequestMessage, RPCResponse, RPCResponseMessage } from '../message';
+import { AppMetadata, RequestArguments, Signer } from '../provider/interface';
+import { Method } from '../provider/method';
+import { AddressString } from '../type';
+import { ensureIntNumber } from '../type/util';
+// import {
+//   decryptContent,
+//   encryptContent,
+//   exportKeyToHexString,
+//   importKeyFromHexString,
+// } from '../util/cipher';
+import { getSession, signIn, signOut } from 'next-auth/react';
 
 type SwitchEthereumChainParam = [
   {
@@ -24,21 +25,24 @@ type SwitchEthereumChainParam = [
 export class SCWSigner implements Signer {
   private readonly metadata: AppMetadata;
   private readonly communicator: Communicator;
-  private readonly keyManager: SCWKeyManager;
+  // private readonly keyManager: SCWKeyManager;
   private readonly stateManager: SCWStateManager;
+  private address: AddressString | undefined;
 
   constructor(params: {
+    address?: AddressString;
     metadata: AppMetadata;
     communicator: Communicator;
     updateListener: StateUpdateListener;
   }) {
     this.metadata = params.metadata;
     this.communicator = params.communicator;
-    this.keyManager = new SCWKeyManager();
+    // this.keyManager = new SCWKeyManager();
     this.stateManager = new SCWStateManager({
       appChainIds: this.metadata.appChainIds,
       updateListener: params.updateListener,
     });
+    this.address = params.address;
 
     this.handshake = this.handshake.bind(this);
     this.request = this.request.bind(this);
@@ -47,28 +51,43 @@ export class SCWSigner implements Signer {
   }
 
   async handshake(): Promise<AddressString[]> {
-    const handshakeMessage = await this.createRequestMessage({
-      handshake: {
-        method: 'eth_requestAccounts',
-        params: this.metadata,
+    // const handshakeMessage = await this.createRequestMessage({
+    //   handshake: {
+    //     method: 'eth_requestAccounts',
+    //     params: this.metadata,
+    //   },
+    // });
+    // const response: RPCResponseMessage = await this.communicator.postRequestAndWaitForResponse(
+    //   handshakeMessage
+    // );
+    let accounts: AddressString[] = [];
+    const session = await getSession();
+    if (!session || !session.user) {
+      await signIn('alias');
+    } else {
+      const address = (session.user as any).wallet as AddressString;
+      this.address = address
+      accounts = [address] as AddressString[]
+    }
+
+    const response: RPCResponse<unknown> = {
+      result: {
+        value: accounts
       },
-    });
-    const response: RPCResponseMessage = await this.communicator.postRequestAndWaitForResponse(
-      handshakeMessage
-    );
+    }
 
     // store peer's public key
-    if ('failure' in response.content) throw response.content.failure;
-    const peerPublicKey = await importKeyFromHexString('public', response.sender);
-    await this.keyManager.setPeerPublicKey(peerPublicKey);
+    // if ('failure' in response.content) throw response.content.failure;
+    // const peerPublicKey = await importKeyFromHexString('public', response.sender);
+    // await this.keyManager.setPeerPublicKey(peerPublicKey);
 
-    const decrypted = await this.decryptResponseMessage<AddressString[]>(response);
-    this.updateInternalState({ method: 'eth_requestAccounts' }, decrypted);
+    // const decrypted = await this.decryptResponseMessage<AddressString[]>(response);
+    this.updateInternalState({ method: 'eth_requestAccounts' }, response);
 
-    const result = decrypted.result;
-    if ('error' in result) throw result.error;
+    // const result = decrypted.result;
+    // if ('error' in result) throw result.error;
 
-    return this.stateManager.accounts;
+    return this.stateManager.accounts as AddressString[];
   }
 
   async request<T>(request: RequestArguments): Promise<T> {
@@ -93,8 +112,13 @@ export class SCWSigner implements Signer {
   }
 
   async disconnect() {
+    this.address = undefined
     this.stateManager.clear();
-    await this.keyManager.clear();
+    const session = await getSession()
+    if (session) {
+      await signOut({redirect: false, callbackUrl: '/'})
+    }
+    // await this.keyManager.clear();
   }
 
   private tryLocalHandling<T>(request: RequestArguments): T | undefined {
@@ -126,21 +150,30 @@ export class SCWSigner implements Signer {
   }
 
   private async sendEncryptedRequest(request: RequestArguments): Promise<RPCResponseMessage> {
-    const sharedSecret = await this.keyManager.getSharedSecret();
-    if (!sharedSecret) {
+    // const sharedSecret = await this.keyManager.getSharedSecret();
+    // if (!sharedSecret) {
+    //   throw standardErrors.provider.unauthorized(
+    //     'No valid session found, try requestAccounts before other methods'
+    //   );
+    // }
+    const session = await getSession()
+    if (!session) {
       throw standardErrors.provider.unauthorized(
         'No valid session found, try requestAccounts before other methods'
       );
     }
 
-    const encrypted = await encryptContent(
-      {
-        action: request,
-        chainId: this.stateManager.activeChain.id,
-      },
-      sharedSecret
-    );
-    const message = await this.createRequestMessage({ encrypted });
+    // const encrypted = await encryptContent(
+    //   {
+    //     action: request,
+    //     chainId: this.stateManager.activeChain.id,
+    //   },
+    //   sharedSecret
+    // );
+    const message = await this.createRequestMessage({
+      action: request,
+      chainId: this.stateManager.activeChain.id,
+    });
 
     return this.communicator.postRequestAndWaitForResponse(message);
   }
@@ -148,10 +181,10 @@ export class SCWSigner implements Signer {
   private async createRequestMessage(
     content: RPCRequestMessage['content']
   ): Promise<RPCRequestMessage> {
-    const publicKey = await exportKeyToHexString('public', await this.keyManager.getOwnPublicKey());
+    // const publicKey = await exportKeyToHexString('public', await this.keyManager.getOwnPublicKey());
     return {
-      id: crypto.randomUUID(),
-      sender: publicKey,
+      // id: crypto.randomUUID(),
+      // sender: publicKey,
       content,
       timestamp: new Date(),
     };
@@ -165,12 +198,17 @@ export class SCWSigner implements Signer {
       throw content.failure;
     }
 
-    const sharedSecret = await this.keyManager.getSharedSecret();
-    if (!sharedSecret) {
+    // const sharedSecret = await this.keyManager.getSharedSecret();
+    // if (!sharedSecret) {
+    //   throw standardErrors.provider.unauthorized('Invalid session');
+    // }
+    const session = await getSession()
+    if (!session) {
       throw standardErrors.provider.unauthorized('Invalid session');
     }
 
-    return decryptContent(content.encrypted, sharedSecret);
+    // return decryptContent(content.encrypted, sharedSecret);
+    return content as RPCResponse<T>;
   }
 
   private updateInternalState<T>(request: RequestArguments, response: RPCResponse<T>) {

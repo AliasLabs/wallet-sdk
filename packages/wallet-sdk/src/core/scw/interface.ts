@@ -1,4 +1,4 @@
-import { AddressString, Chain } from ':core/type';
+import { AddressString, Chain } from '../type';
 
 type UpdateSource = 'wallet' | 'storage';
 

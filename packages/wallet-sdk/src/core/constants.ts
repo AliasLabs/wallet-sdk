@@ -1,3 +1,2 @@
-export const CB_KEYS_URL = 'https://keys.coinbase.com/connect';
-export const WALLETLINK_URL = 'https://www.walletlink.org';
-export const CBW_MOBILE_DEEPLINK_URL = 'https://go.cb-w.com/walletlink';
+export const ALIAS_WALLET_URL = 'http://localhost:3001/wallet'
+export const LIB_VERSION = '0.0.1'

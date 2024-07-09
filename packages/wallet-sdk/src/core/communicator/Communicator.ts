@@ -1,11 +1,10 @@
-import { LIB_VERSION } from '../../version';
 import { ConfigMessage, Message, MessageID } from '../message';
 import { closePopup, openPopup } from './util';
-import { CB_KEYS_URL } from ':core/constants';
-import { standardErrors } from ':core/error';
+import { ALIAS_WALLET_URL, LIB_VERSION } from '../constants';
+import { standardErrors } from '../error';
 
 /**
- * Communicates with a popup window for Coinbase keys.coinbase.com (or another url)
+ * Communicates with a popup window for Alias wallet link (or another url)
  * to send and receive messages.
  *
  * This class is responsible for opening a popup window, posting messages to it,
@@ -18,7 +17,7 @@ export class Communicator {
   private popup: Window | null = null;
   private listeners = new Map<(_: MessageEvent) => void, { reject: (_: Error) => void }>();
 
-  constructor(url: string = CB_KEYS_URL) {
+  constructor(url: string = ALIAS_WALLET_URL) {
     this.url = new URL(url);
   }
 
@@ -34,7 +33,7 @@ export class Communicator {
    * Posts a request to the popup window and waits for a response
    */
   postRequestAndWaitForResponse = async <M extends Message>(
-    request: Message & { id: MessageID }
+    request: Message | Message & { id: MessageID }
   ): Promise<M> => {
     const responsePromise = this.onMessage<M>(({ requestId }) => requestId === request.id);
     this.postMessage(request);

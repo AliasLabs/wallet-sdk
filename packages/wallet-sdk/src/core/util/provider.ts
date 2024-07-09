@@ -1,12 +1,12 @@
-import { LIB_VERSION } from '../version';
-import { standardErrors } from ':core/error';
+import { LIB_VERSION } from '../constants';
+import { standardErrors } from '../error';
 import {
   ConstructorOptions,
   ProviderInterface,
   RequestArguments,
   Signer,
-} from ':core/provider/interface';
-import { Chain } from ':core/type';
+} from '../provider/interface';
+import { Chain } from '../type';
 
 export async function fetchRPCRequest(request: RequestArguments, chain: Chain) {
   if (!chain.rpcUrl) throw standardErrors.rpc.internal('No RPC URL set for chain');

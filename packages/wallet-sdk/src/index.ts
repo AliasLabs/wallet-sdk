@@ -1,7 +1,5 @@
-// Copyright (c) 2018-2024 Coinbase, Inc. <https://www.coinbase.com/>
-import { CoinbaseWalletSDK } from './CoinbaseWalletSDK';
-export default CoinbaseWalletSDK;
+import { AliasWalletProvider } from './provider';
+export default AliasWalletProvider;
 
-export type { CoinbaseWalletProvider } from './CoinbaseWalletProvider';
-export { CoinbaseWalletSDK } from './CoinbaseWalletSDK';
-export type { AppMetadata, Preference, ProviderInterface } from './core/provider/interface';
+export { AliasWalletProvider } from './provider';
+export type { AppMetadata, Preference, ProviderInterface } from './core/provider/interface.ts';

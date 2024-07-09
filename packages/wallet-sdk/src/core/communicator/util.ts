@@ -1,4 +1,4 @@
-import { standardErrors } from ':core/error';
+import { standardErrors } from '../error';
 
 const POPUP_WIDTH = 420;
 const POPUP_HEIGHT = 540;
@@ -10,8 +10,8 @@ export function openPopup(url: URL): Window {
   const top = (window.innerHeight - POPUP_HEIGHT) / 2 + window.screenY;
 
   const popup = window.open(
-    url,
-    'Smart Wallet',
+    `${url}?from=${window.location.href}`,
+    'Alias Wallet',
     `width=${POPUP_WIDTH}, height=${POPUP_HEIGHT}, left=${left}, top=${top}`
   );
   popup?.focus();

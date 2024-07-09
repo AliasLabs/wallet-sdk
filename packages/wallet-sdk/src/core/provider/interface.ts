@@ -1,7 +1,7 @@
 import { EventEmitter } from 'eventemitter3';
 
 import { Method } from './method';
-import { AddressString } from ':core/type';
+import { AddressString } from '../type';
 
 export interface RequestArguments {
   readonly method: Method | string;
@@ -43,7 +43,7 @@ export interface AppMetadata {
 }
 
 export interface Preference {
-  options: 'all' | 'smartWalletOnly' | 'eoaOnly';
+  options: 'smartWalletOnly';
   keysUrl?: string;
 }
 

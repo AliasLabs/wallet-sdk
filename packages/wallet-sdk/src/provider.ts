@@ -1,45 +1,38 @@
 import EventEmitter from 'eventemitter3';
-
-import { standardErrorCodes, standardErrors } from './core/error';
-import { serializeError } from './core/error/serialize';
-import {
-  AppMetadata,
-  ConstructorOptions,
-  Preference,
-  ProviderInterface,
-  RequestArguments,
-  Signer,
-} from './core/provider/interface';
+import { AppMetadata, ConstructorOptions, ProviderInterface, RequestArguments, Signer } from './core/provider/interface';
+import { Communicator } from './core/communicator/Communicator';
 import { AddressString, Chain, IntNumber } from './core/type';
+import { determineMethodCategory } from './core/provider/method';
 import { areAddressArraysEqual, hexStringFromIntNumber } from './core/type/util';
-import { AccountsUpdate, ChainUpdate } from './sign/interface';
-import { createSigner, fetchSignerType, loadSignerType, storeSignerType } from './sign/util';
-import { checkErrorForInvalidRequestArgs, fetchRPCRequest } from './util/provider';
-import { Communicator } from ':core/communicator/Communicator';
-import { SignerType } from ':core/message';
-import { determineMethodCategory } from ':core/provider/method';
-import { ScopedLocalStorage } from ':util/ScopedLocalStorage';
+import { standardErrorCodes, standardErrors } from './core/error';
+import { checkErrorForInvalidRequestArgs, fetchRPCRequest } from './core/util/provider';
+import { ScopedLocalStorage } from './core/util/ScopedLocalStorage';
+import { serializeError } from './core/error/serialize';
+import { SCWSigner } from './core/scw/SCWSigner';
+import { AccountsUpdate, ChainUpdate } from './core/scw/interface';
 
-export class CoinbaseWalletProvider extends EventEmitter implements ProviderInterface {
+export class AliasWalletProvider extends EventEmitter implements ProviderInterface {
   private readonly metadata: AppMetadata;
-  private readonly preference: Preference;
   private readonly communicator: Communicator;
 
   private signer: Signer | null;
+  private address: AddressString | undefined;
   protected accounts: AddressString[] = [];
   protected chain: Chain;
 
-  constructor({ metadata, preference: { keysUrl, ...preference } }: Readonly<ConstructorOptions>) {
+  constructor({ metadata, preference: { keysUrl } }: Readonly<ConstructorOptions>) {
     super();
     this.metadata = metadata;
-    this.preference = preference;
     this.communicator = new Communicator(keysUrl);
     this.chain = {
       id: metadata.appChainIds?.[0] ?? 1,
     };
     // Load states from storage
-    const signerType = loadSignerType();
-    this.signer = signerType ? this.initSigner(signerType) : null;
+    this.signer = new SCWSigner({
+      metadata,
+      communicator: this.communicator,
+      updateListener: this.updateListener
+    })
   }
 
   public get connected() {
@@ -67,12 +60,10 @@ export class CoinbaseWalletProvider extends EventEmitter implements ProviderInte
           return this.accounts;
         }
 
-        const signerType = await this.requestSignerSelection();
-        const signer = this.initSigner(signerType);
+        const signer = this.initSigner();
         const accounts = await signer.handshake();
 
         this.signer = signer;
-        storeSignerType(signerType);
 
         this.emit('connect', { chainId: hexStringFromIntNumber(IntNumber(this.chain.id)) });
         return accounts;
@@ -150,8 +141,6 @@ export class CoinbaseWalletProvider extends EventEmitter implements ProviderInte
     this.emit('disconnect', standardErrors.provider.disconnected('User initiated disconnection'));
   }
 
-  readonly isCoinbaseWallet = true;
-
   protected readonly updateListener = {
     onAccountsUpdate: ({ accounts, source }: AccountsUpdate) => {
       if (areAddressArraysEqual(this.accounts, accounts)) return;
@@ -167,20 +156,12 @@ export class CoinbaseWalletProvider extends EventEmitter implements ProviderInte
     },
   };
 
-  private requestSignerSelection(): Promise<SignerType> {
-    return fetchSignerType({
-      communicator: this.communicator,
-      preference: this.preference,
-      metadata: this.metadata,
-    });
-  }
-
-  private initSigner(signerType: SignerType): Signer {
-    return createSigner({
-      signerType,
+  private initSigner(): Signer {
+    return new SCWSigner({
       metadata: this.metadata,
       communicator: this.communicator,
       updateListener: this.updateListener,
-    });
+      address: this.address
+    })
   }
 }

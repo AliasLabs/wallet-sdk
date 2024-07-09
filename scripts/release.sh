@@ -28,8 +28,8 @@ if [ $branch == $mainBranch ]; then
   rm -rf ./packages/wallet-sdk/dist
   echo -e "yarn install"
   yarn install
-  echo -e "yarn workspace @coinbase/wallet-sdk build"
-  yarn workspace @coinbase/wallet-sdk build
+  echo -e "yarn workspace alias-wallet-sdk build"
+  yarn workspace alias-wallet-sdk build
   echo -e "cd ./packages/wallet-sdk"
   cd ./packages/wallet-sdk
   echo "================================================="
