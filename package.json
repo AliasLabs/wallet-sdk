@@ -1,7 +1,7 @@
 {
   "name": "alias-wallet-sdk",
   "version": "1.0.0",
-  "repository": "https://github.com/AliasLabs/alias-wallet-sdk",
+  "repository": "https://github.com/AliasLabs/wallet-sdk",
   "author": "geovgy",
   "license": "MIT",
   "private": true,
