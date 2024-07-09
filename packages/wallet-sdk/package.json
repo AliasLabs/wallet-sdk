@@ -1,6 +1,6 @@
 {
   "name": "alias-wallet",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Alias Wallet SDK",
   "keywords": [
     "cipher",
@@ -17,7 +17,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,
-  "repository": "https://github.com/AliasLabs/wallet-sdk.git",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AliasLabs/wallet-sdk.git"
+  },
   "author": "geovgy",
   "license": "Apache-2.0",
   "scripts": {
