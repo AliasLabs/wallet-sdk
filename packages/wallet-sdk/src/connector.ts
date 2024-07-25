@@ -1,5 +1,6 @@
 import type {
   AppMetadata,
+  OAuthConfigs,
   ProviderInterface,
 } from './core/provider/interface'
 import {
@@ -48,6 +49,7 @@ type ConnectorParameters = Mutable<
     'appChainIds' // set via wagmi config
   > & {
     keysUrl?: string | undefined,
+    oauthConfigs?: OAuthConfigs | undefined,
   }
 >
 
@@ -161,6 +163,7 @@ function toAliasWagmiConnector(parameters: ConnectorParameters) {
             options: 'smartWalletOnly',
             keysUrl: parameters.keysUrl,
           },
+          oauthConfigs: parameters.oauthConfigs,
         })
       }
 

@@ -20,7 +20,7 @@ export class AliasWalletProvider extends EventEmitter implements ProviderInterfa
   protected accounts: AddressString[] = [];
   protected chain: Chain;
 
-  constructor({ metadata, preference: { keysUrl } }: Readonly<ConstructorOptions>) {
+  constructor({ metadata, preference: { keysUrl }, oauthConfigs }: Readonly<ConstructorOptions>) {
     super();
     this.metadata = metadata;
     this.communicator = new Communicator(keysUrl);
@@ -31,7 +31,8 @@ export class AliasWalletProvider extends EventEmitter implements ProviderInterfa
     this.signer = new SCWSigner({
       metadata,
       communicator: this.communicator,
-      updateListener: this.updateListener
+      updateListener: this.updateListener,
+      oauth: oauthConfigs,
     })
   }
 

@@ -4,7 +4,7 @@ import { SCWStateManager } from './SCWStateManager';
 import { Communicator } from '../communicator/Communicator';
 import { standardErrors } from '../error';
 import { RPCRequestMessage, RPCResponse, RPCResponseMessage } from '../message';
-import { AppMetadata, RequestArguments, Signer } from '../provider/interface';
+import { AppMetadata, OAuthConfigs, RequestArguments, Signer } from '../provider/interface';
 import { Method } from '../provider/method';
 import { AddressString } from '../type';
 import { ensureIntNumber } from '../type/util';
@@ -29,11 +29,14 @@ export class SCWSigner implements Signer {
   private readonly stateManager: SCWStateManager;
   private address: AddressString | undefined;
 
+  private readonly oauth: OAuthConfigs | undefined;
+
   constructor(params: {
     address?: AddressString;
     metadata: AppMetadata;
     communicator: Communicator;
     updateListener: StateUpdateListener;
+    oauth?: OAuthConfigs;
   }) {
     this.metadata = params.metadata;
     this.communicator = params.communicator;
@@ -43,6 +46,7 @@ export class SCWSigner implements Signer {
       updateListener: params.updateListener,
     });
     this.address = params.address;
+    this.oauth = params.oauth;
 
     this.handshake = this.handshake.bind(this);
     this.request = this.request.bind(this);
@@ -63,7 +67,9 @@ export class SCWSigner implements Signer {
     let accounts: AddressString[] = [];
     const session = await getSession();
     if (!session || !session.user) {
-      await signIn('alias');
+      const provider = this.oauth?.provider ?? 'alias'
+      const options = this.oauth?.signInRedirect ? {redirect: this.oauth.signInRedirect.enabled, callbackUrl: this.oauth.signInRedirect.url} : undefined
+      options ? await signIn(provider, options) : await signIn(provider);
     } else {
       const address = (session.user as any).wallet as AddressString;
       this.address = address
@@ -116,7 +122,8 @@ export class SCWSigner implements Signer {
     this.stateManager.clear();
     const session = await getSession()
     if (session) {
-      await signOut({redirect: false, callbackUrl: '/'})
+      const options = this.oauth?.signOutRedirect ? {redirect: this.oauth.signOutRedirect.enabled, callbackUrl: this.oauth.signOutRedirect.url} : undefined
+      await signOut(options)
     }
     // await this.keyManager.clear();
   }

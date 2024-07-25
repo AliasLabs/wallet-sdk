@@ -47,9 +47,16 @@ export interface Preference {
   keysUrl?: string;
 }
 
+export type OAuthConfigs = {
+  provider?: string;
+  signInRedirect?: { enabled: boolean; url: string };
+  signOutRedirect?: { enabled: boolean; url: string };
+};
+
 export interface ConstructorOptions {
   metadata: AppMetadata;
   preference: Preference;
+  oauthConfigs?: OAuthConfigs;
 }
 
 export interface Signer {
